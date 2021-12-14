@@ -17,9 +17,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.gzx.qweather.Constant.ResponseCode.*;
 import static com.gzx.qweather.Constant.WeatherNow.*;
@@ -132,9 +130,9 @@ public class HttpUtil {
 
         private final Context context;
         private final String url;
-        private final QWeather.NowWeatherCallback nowWeatherCallback;
+        private final QWeather.WeatherCallback nowWeatherCallback;
 
-        public GetNowWeatherThread(Context context, QWeather.NowWeatherCallback nowWeatherCallback, String url) {
+        public GetNowWeatherThread(Context context, QWeather.WeatherCallback nowWeatherCallback, String url) {
             super();
             this.context = context;
             this.nowWeatherCallback = nowWeatherCallback;
@@ -174,44 +172,100 @@ public class HttpUtil {
                 return;
             }
 
-            Object ob = jsonObject.get(BaseBeanEnum.NOW.getKey());
-            if (!(ob instanceof Map)){
-                HiLog.error(TAG,"<<<<< !(ob instanceof Map) >>>>>");
-                nowWeatherCallback.onERROR(ERROR_SERVER_API);
-                return;
+            //Object ob = jsonObject.get(BaseBeanEnum.NOW.getKey());
+
+            for (String key : jsonObject.keySet()){
+                if (key.equals(BaseBeanEnum.NOW.getKey())){
+                    Object ob = jsonObject.get(BaseBeanEnum.NOW.getKey());
+                    if (!(ob instanceof Map)){
+                        HiLog.error(TAG,"<<<<< !(ob instanceof Map) >>>>>");
+                        nowWeatherCallback.onERROR(ERROR_SERVER_API);
+                        return;
+                    }
+                    Map<String , String> map = null;
+                    try{
+                        map = (Map<String, String>) ob;
+                    }catch (Exception e){
+                        // api error 实时天气不能转化为 Map<String, String>
+                        HiLog.error(TAG,"JSON.map = (Map<String, String>) ob --->" + e);
+                        nowWeatherCallback.onERROR(ERROR_SERVER_API);
+                        return;
+                    }
+                    WeatherNow weatherNow = getWeatherBean(map);
+                    if (weatherNow == null){
+                        nowWeatherCallback.onERROR(ERROR_SERVER_API);
+                    }else {
+                        nowWeatherCallback.onNowSUCCESS(weatherNow);
+                    }
+                    break;
+                }else if (key.equals(BaseBeanEnum.DAILY.getKey()) || key.equals(BaseBeanEnum.HOURLY.getKey())){
+                    Object ob;
+                    boolean flag = false;
+
+                    if (key.equals(BaseBeanEnum.HOURLY.getKey())){
+                        ob = jsonObject.get(BaseBeanEnum.HOURLY.getKey());
+                        flag = true;
+                    }else {
+                        ob = jsonObject.get(BaseBeanEnum.DAILY.getKey());
+                    }
+                    HiLog.debug(TAG,""+ob.toString());
+                    if (!(ob instanceof List)){
+                        HiLog.error(TAG,"<<<<< !(ob instanceof List) >>>>>");
+                        nowWeatherCallback.onERROR(ERROR_SERVER_API);
+                        return;
+                    }
+                    List<Map<String , String>> list = null;
+                    try{
+                        list = (List<Map<String , String>> ) ob;
+                    }catch (Exception e){
+                        // api error 实时天气不能转化为 Map<String, String>
+                        HiLog.error(TAG,"JSON.map = (List<Map<String , String>>) ob --->" + e);
+                        nowWeatherCallback.onERROR(ERROR_SERVER_API);
+                        return;
+                    }
+                    List<WeatherNow> weatherNowList = new ArrayList<>();
+                    for (Map<String , String> m : list){
+                        WeatherNow weatherNow = getWeatherBean(m);
+                        if (weatherNow == null){
+                            nowWeatherCallback.onERROR(ERROR_SERVER_API);
+                        }else {
+                            weatherNowList.add(weatherNow);
+                        }
+                    }
+                    if (flag){
+                        nowWeatherCallback.onHourlySUCCESS(weatherNowList);
+                    }else {
+                        nowWeatherCallback.onDailySUCCESS(weatherNowList);
+                    }
+                    break;
+                }
             }
-            Map<String , String> map = null;
-            try{
-                map = (Map<String, String>) ob;
-            }catch (Exception e){
-                // api error 实时天气不能转化为 Map<String, String>
-                HiLog.error(TAG,"JSON.map = (Map<String, String>) ob --->" + e);
-                nowWeatherCallback.onERROR(ERROR_SERVER_API);
-                return;
-            }
-            try {
-                WeatherNow weatherNow = new WeatherNow();
-                weatherNow.setTemp(map.get(TEMP));
-                weatherNow.setText(map.get(TEXT));
-                weatherNow.setCloud(map.get(CLOUD));
-                weatherNow.setDew(DEW);
-                weatherNow.setFeelsLike(FEELS_LIKE);
-                weatherNow.setHumidity(HUMIDITY);
-                weatherNow.setIcon(ICON);
-                weatherNow.setObsTime(OBS_TIME);
-                weatherNow.setPrecip(PRECIP);
-                weatherNow.setPressure(PRESSURE);
-                weatherNow.setVis(VIS);
-                weatherNow.setWind360(WIND360);
-                weatherNow.setWindSpeed(WIND_SPEED);
-                weatherNow.setWindScale(WIND_SCALE);
-                weatherNow.setWindDir(WIND_DIR);
-                nowWeatherCallback.onSUCCESS(weatherNow);
-            }catch (Exception e){
-                // api error 实时天气map 缺少相关key
-                HiLog.error(TAG,"JSON.map.get --->" + e);
-                nowWeatherCallback.onERROR(ERROR_SERVER_API);
-            }
+        }
+    }
+
+    private static WeatherNow getWeatherBean(Map<String, String> map){
+        try {
+            WeatherNow weatherNow = new WeatherNow();
+            weatherNow.setTemp(map.get(TEMP));
+            weatherNow.setText(map.get(TEXT));
+            weatherNow.setCloud(map.get(CLOUD));
+            weatherNow.setDew(DEW);
+            weatherNow.setFeelsLike(FEELS_LIKE);
+            weatherNow.setHumidity(HUMIDITY);
+            weatherNow.setIcon(ICON);
+            weatherNow.setObsTime(OBS_TIME);
+            weatherNow.setPrecip(PRECIP);
+            weatherNow.setPressure(PRESSURE);
+            weatherNow.setVis(VIS);
+            weatherNow.setWind360(WIND360);
+            weatherNow.setWindSpeed(WIND_SPEED);
+            weatherNow.setWindScale(WIND_SCALE);
+            weatherNow.setWindDir(WIND_DIR);
+            return weatherNow;
+        }catch (Exception e){
+            // api error 实时天气map 缺少相关key
+            HiLog.error(TAG,"JSON.map.get --->" + e);
+            return null;
         }
     }
 

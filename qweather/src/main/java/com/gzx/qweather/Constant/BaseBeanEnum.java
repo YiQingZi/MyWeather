@@ -7,7 +7,11 @@ public enum BaseBeanEnum {
     UPDATE_TIME("updateTime"),
     FX_LINK("fxLink"),
     LOCATION("location"),
-    NOW("now");
+    NOW("now"),
+    DAILY("daily"),
+    HOURLY("hourly")
+
+    ;
 
 
     private final String type;

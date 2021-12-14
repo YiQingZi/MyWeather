@@ -9,6 +9,7 @@ import com.gzx.qweather.Utils.UrlUtil;
 import ohos.app.Context;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class QWeather {
@@ -78,20 +79,42 @@ public class QWeather {
         getCityInfoThread.start();
     }
 
-    public void GetOneNowCallBack(NowWeatherCallback nowWeatherCallback){
+    public void GetOneNowCallBack(WeatherCallback nowWeatherCallback){
         String url = UrlUtil.getUrl(UrlEnum.WEATHER_DEV_HTTP.getURL()+UrlEnum.WEATHER_NOW.getURL(),requestParameters);
         HttpUtil.GetNowWeatherThread getNowWeatherThread = new HttpUtil.GetNowWeatherThread(context,nowWeatherCallback,url);
         getNowWeatherThread.start();
     }
 
-    public static abstract class NowWeatherCallback implements GetNowWeatherCallBack{
+    public void GetOne3DayCallBack(WeatherCallback weatherCallback){
+        String url = UrlUtil.getUrl(UrlEnum.WEATHER_DEV_HTTP.getURL()+UrlEnum.WEATHER_3D.getURL(),requestParameters);
+        HttpUtil.GetNowWeatherThread getNowWeatherThread = new HttpUtil.GetNowWeatherThread(context,weatherCallback,url);
+        getNowWeatherThread.start();
+    }
+
+    public void GetOne24HayCallBack(WeatherCallback weatherCallback){
+        String url = UrlUtil.getUrl(UrlEnum.WEATHER_DEV_HTTP.getURL()+UrlEnum.WEATHER_24H.getURL(),requestParameters);
+        HttpUtil.GetNowWeatherThread getNowWeatherThread = new HttpUtil.GetNowWeatherThread(context,weatherCallback,url);
+        getNowWeatherThread.start();
+    }
+
+    public static abstract class WeatherCallback implements GetWeatherCallBack {
         @Override
         public void onERROR(String errorCode) {
 
         }
 
         @Override
-        public void onSUCCESS(WeatherNow weatherNow) {
+        public void onNowSUCCESS(WeatherNow weatherNow) {
+
+        }
+
+        @Override
+        public void onDailySUCCESS(List<WeatherNow> dailyWeather) {
+
+        }
+
+        @Override
+        public void onHourlySUCCESS(List<WeatherNow> hourlyWeather) {
 
         }
     }
@@ -110,16 +133,6 @@ public class QWeather {
         }
     }
 
-    public static abstract class DailyWeather implements GetDailyWeather{
-        @Override
-        public void onERROR(String errorCode) {
 
-        }
-
-        @Override
-        public void onSUCCESS(WeatherNow weatherNow) {
-
-        }
-    }
 
 }
