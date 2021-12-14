@@ -6,6 +6,9 @@ public enum RequestParametersEnum {
     T("t"),
     LOCATION("location"),
     LANG("lang"),
+    RANGE("range"),
+    ADM("adm"),
+    NUMBER("number"),
     UNIT("unit"),
     GZIP("gzip");
 

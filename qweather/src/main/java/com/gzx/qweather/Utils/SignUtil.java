@@ -1,4 +1,4 @@
-package com.gzx.qweather;
+package com.gzx.qweather.Utils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -10,7 +10,7 @@ public class SignUtil {
     /**
      * 官方签名版
      *
-     * @param params 请求参数,示例{"":""}
+     * @param params 请求参数,示例{"lang":"zh","gzip":"n"}
      * @param secret 签名密钥（用户私钥）
      * @return 签名字符串
      */

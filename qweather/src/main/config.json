@@ -7,8 +7,7 @@
       "name": "1.0.0"
     }
   },
-  "deviceConfig": {
-  },
+  "deviceConfig": {},
   "module": {
     "package": "com.gzx.qweather",
     "deviceType": [
@@ -22,6 +21,20 @@
       "deliveryWithInstall": true,
       "moduleName": "qweather",
       "moduleType": "har"
-    }
+    },
+    "reqPermissions": [
+      {
+        "name": "ohos.permission.GET_NETWORK_INFO"
+      },
+      {
+        "name": "ohos.permission.INTERNET"
+      },
+      {
+        "name": "ohos.permission.LOCATION"
+      },
+      {
+        "name": "ohos.permission.LOCATION_IN_BACKGROUND"
+      }
+    ]
   }
 }

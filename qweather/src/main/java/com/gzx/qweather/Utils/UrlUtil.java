@@ -1,7 +1,5 @@
 package com.gzx.qweather.Utils;
 
-import com.gzx.qweather.HttpUtil;
-import com.gzx.qweather.SignUtil;
 import com.gzx.qweather.Constant.RequestParametersEnum;
 import ohos.hiviewdfx.HiLog;
 import ohos.hiviewdfx.HiLogLabel;

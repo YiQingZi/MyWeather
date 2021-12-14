@@ -6,6 +6,7 @@ public enum BaseBeanEnum {
     CODE("code"),
     UPDATE_TIME("updateTime"),
     FX_LINK("fxLink"),
+    LOCATION("location"),
     NOW("now");
 
 
