@@ -1,6 +1,6 @@
 package com.gzx.qweather.Bean;
 
-public class WeatherNow {
+public class WeatherNowBean {
 
 
     public String obsTime;   //数据观测时间

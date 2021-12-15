@@ -1,10 +1,10 @@
 package com.gzx.qweather;
 
-import com.gzx.qweather.Bean.CityInfo;
+import com.gzx.qweather.Bean.CityInfoBean;
 
 public interface GetCityCallBack {
 
     void onERROR(String errorCode);
-    void onSUCCESS(CityInfo cityInfo);
+    void onSUCCESS(CityInfoBean cityInfoBean);
 
 }

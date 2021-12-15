@@ -2,9 +2,13 @@ package com.gzx.qweather.Utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.gzx.qweather.Bean.CityInfo;
-import com.gzx.qweather.Bean.WeatherNow;
+import com.gzx.qweather.Bean.CityInfoBean;
+import com.gzx.qweather.Bean.WeatherDailyBean;
+import com.gzx.qweather.Bean.WeatherLifeBean;
+import com.gzx.qweather.Bean.WeatherNowBean;
 import com.gzx.qweather.Constant.BaseBeanEnum;
+import com.gzx.qweather.Constant.WeatherDaily;
+import com.gzx.qweather.Constant.WeatherLife;
 import com.gzx.qweather.QWeather;
 import ohos.app.Context;
 import ohos.hiviewdfx.HiLog;
@@ -20,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.gzx.qweather.Constant.ResponseCode.*;
+import static com.gzx.qweather.Constant.WeatherDaily.*;
 import static com.gzx.qweather.Constant.WeatherNow.*;
 import static com.gzx.qweather.Constant.CityInfo.*;
 
@@ -33,6 +38,89 @@ public class HttpUtil {
     private static final String fail = "f";
     private static final String isCode = "isCode";
 
+
+    public static class GetLifeThread extends Thread{
+
+        private final QWeather.WeatherLifeCallBack weatherLifeCallBack;
+        private final Context context;
+        private final String url;
+
+        public GetLifeThread(Context context, QWeather.WeatherLifeCallBack cityCallBack, String url) {
+            super();
+            this.weatherLifeCallBack = cityCallBack;
+            this.context = context;
+            this.url = url;
+        }
+
+        @Override
+        public void run() {
+            super.run();
+
+            String s = doGET(context,url);
+            if (null == s || s.equals("")){
+                // http 响应码非200
+                weatherLifeCallBack.onERROR(ERROR_HTTP_GET);
+                return;
+            }
+            JSONObject jsonObject = null;
+            try{
+                jsonObject = JSON.parseObject(s);
+            }catch (Exception e){
+                // api error 请求结果不能转化为json
+                HiLog.error(TAG,"JSON.parseObject  --->" + e);
+                weatherLifeCallBack.onERROR(ERROR_SERVER_API);
+                return;
+            }
+
+            try{
+                String c = jsonObject.get(BaseBeanEnum.CODE.getKey()).toString();
+                Map<String,String> code_map = checkCode(c);
+                if (code_map.get(isPass).equals(fail)){
+                    weatherLifeCallBack.onERROR(code_map.get(isCode));
+                    return;
+                }
+            }catch (Exception e){
+                // api error 请求结果没有 code key
+                HiLog.error(TAG,"JSON.checkCode.getkey  --->" + e);
+                weatherLifeCallBack.onERROR(ERROR_SERVER_API);
+                return;
+            }
+            Object ob = jsonObject.get(BaseBeanEnum.DAILY.getKey());
+            if (!(ob instanceof List)){
+                HiLog.error(TAG,"<<<<< !(ob instanceof List) >>>>>");
+                weatherLifeCallBack.onERROR(ERROR_SERVER_API);
+                return;
+            }
+            List<Map<String,String>> list = null;
+
+            try{
+                list = (List<Map<String,String>>) ob;
+            }catch (Exception e){
+                // api error 实时天气不能转化为 Map<String, String>
+                HiLog.error(TAG,"JSON.list = (List<Map<String,String>>) ob --->" + e);
+                weatherLifeCallBack.onERROR(ERROR_SERVER_API);
+                return;
+            }
+            try{
+                List<WeatherLifeBean> lifeBeanList = new ArrayList<>();
+                for (Map<String,String> map : list){
+                    WeatherLifeBean weatherLifeBean = new WeatherLifeBean();
+                    weatherLifeBean.setCATEGORY(map.get(WeatherLife.CATEGORY));
+                    weatherLifeBean.setDATE(map.get(WeatherLife.DATE));
+                    weatherLifeBean.setLEVEL(map.get(WeatherLife.LEVEL));
+                    weatherLifeBean.setNAME(map.get(WeatherLife.NAME));
+                    weatherLifeBean.setTEXT(map.get(WeatherLife.TEXT));
+                    weatherLifeBean.setTYPE(map.get(WeatherLife.TYPE));
+                    lifeBeanList.add(weatherLifeBean);
+                }
+                weatherLifeCallBack.onSUCCESS(lifeBeanList);
+            }catch (Exception e){
+                // api error 天气指数map 缺少相关key
+                HiLog.error(TAG,"JSON.map.get --->" + e);
+                weatherLifeCallBack.onERROR(ERROR_SERVER_API);
+            }
+        }
+    }
 
     public static class GetCityInfoThread extends Thread{
 
@@ -100,23 +188,23 @@ public class HttpUtil {
                 return;
             }
             try{
-                CityInfo cityInfo = new CityInfo();
+                CityInfoBean cityInfoBean = new CityInfoBean();
                 for (Map<String,String> map : list){
-                    cityInfo.setAdm1(map.get(ADM1));
-                    cityInfo.setAdm2(map.get(ADM2));
-                    cityInfo.setCountry(map.get(COUNTRY));
-                    cityInfo.setFxLink(map.get(FXLINK));
-                    cityInfo.setId(map.get(ID));
-                    cityInfo.setIsDst(map.get(ISDST));
-                    cityInfo.setLat(map.get(LAT));
-                    cityInfo.setLon(map.get(LON));
-                    cityInfo.setName(map.get(NAME));
-                    cityInfo.setRank(map.get(RANK));
-                    cityInfo.setType(map.get(TYPE));
-                    cityInfo.setTz(map.get(TZ));
-                    cityInfo.setUtcOffset(map.get(UTCOFFSET));
+                    cityInfoBean.setAdm1(map.get(ADM1));
+                    cityInfoBean.setAdm2(map.get(ADM2));
+                    cityInfoBean.setCountry(map.get(COUNTRY));
+                    cityInfoBean.setFxLink(map.get(FXLINK));
+                    cityInfoBean.setId(map.get(ID));
+                    cityInfoBean.setIsDst(map.get(ISDST));
+                    cityInfoBean.setLat(map.get(LAT));
+                    cityInfoBean.setLon(map.get(LON));
+                    cityInfoBean.setName(map.get(NAME));
+                    cityInfoBean.setRank(map.get(RANK));
+                    cityInfoBean.setType(map.get(TYPE));
+                    cityInfoBean.setTz(map.get(TZ));
+                    cityInfoBean.setUtcOffset(map.get(UTCOFFSET));
 
-                    cityCallBack.onSUCCESS(cityInfo);
+                    cityCallBack.onSUCCESS(cityInfoBean);
                 }
             }catch (Exception e){
                 // api error 实时天气map 缺少相关key
@@ -191,11 +279,11 @@ public class HttpUtil {
                         nowWeatherCallback.onERROR(ERROR_SERVER_API);
                         return;
                     }
-                    WeatherNow weatherNow = getWeatherBean(map);
-                    if (weatherNow == null){
+                    WeatherNowBean weatherNowBean = getWeatherBean(map);
+                    if (weatherNowBean == null){
                         nowWeatherCallback.onERROR(ERROR_SERVER_API);
                     }else {
-                        nowWeatherCallback.onNowSUCCESS(weatherNow);
+                        nowWeatherCallback.onNowSUCCESS(weatherNowBean);
                     }
                     break;
                 }else if (key.equals(BaseBeanEnum.DAILY.getKey()) || key.equals(BaseBeanEnum.HOURLY.getKey())){
@@ -223,19 +311,29 @@ public class HttpUtil {
                         nowWeatherCallback.onERROR(ERROR_SERVER_API);
                         return;
                     }
-                    List<WeatherNow> weatherNowList = new ArrayList<>();
-                    for (Map<String , String> m : list){
-                        WeatherNow weatherNow = getWeatherBean(m);
-                        if (weatherNow == null){
-                            nowWeatherCallback.onERROR(ERROR_SERVER_API);
-                        }else {
-                            weatherNowList.add(weatherNow);
-                        }
-                    }
+
                     if (flag){
-                        nowWeatherCallback.onHourlySUCCESS(weatherNowList);
+                        List<WeatherNowBean> weatherNowBeanList = new ArrayList<>();
+                        for (Map<String , String> m : list){
+                            WeatherNowBean weatherNowBean = getWeatherBean(m);
+                            if (weatherNowBean == null){
+                                nowWeatherCallback.onERROR(ERROR_SERVER_API);
+                            }else {
+                                weatherNowBeanList.add(weatherNowBean);
+                            }
+                        }
+                        nowWeatherCallback.onHourlySUCCESS(weatherNowBeanList);
                     }else {
-                        nowWeatherCallback.onDailySUCCESS(weatherNowList);
+                        List<WeatherDailyBean> weatherDailyBeanList = new ArrayList<>();
+                        for (Map<String , String> m : list){
+                            WeatherDailyBean weatherDailyBean = getWeatherDailyBean(m);
+                            if (weatherDailyBean == null){
+                                nowWeatherCallback.onERROR(ERROR_SERVER_API);
+                            }else {
+                                weatherDailyBeanList.add(weatherDailyBean);
+                            }
+                        }
+                        nowWeatherCallback.onDailySUCCESS(weatherDailyBeanList);
                     }
                     break;
                 }
@@ -243,25 +341,64 @@ public class HttpUtil {
         }
     }
 
-    private static WeatherNow getWeatherBean(Map<String, String> map){
+    private static WeatherDailyBean getWeatherDailyBean(Map<String, String> map){
         try {
-            WeatherNow weatherNow = new WeatherNow();
-            weatherNow.setTemp(map.get(TEMP));
-            weatherNow.setText(map.get(TEXT));
-            weatherNow.setCloud(map.get(CLOUD));
-            weatherNow.setDew(DEW);
-            weatherNow.setFeelsLike(FEELS_LIKE);
-            weatherNow.setHumidity(HUMIDITY);
-            weatherNow.setIcon(ICON);
-            weatherNow.setObsTime(OBS_TIME);
-            weatherNow.setPrecip(PRECIP);
-            weatherNow.setPressure(PRESSURE);
-            weatherNow.setVis(VIS);
-            weatherNow.setWind360(WIND360);
-            weatherNow.setWindSpeed(WIND_SPEED);
-            weatherNow.setWindScale(WIND_SCALE);
-            weatherNow.setWindDir(WIND_DIR);
-            return weatherNow;
+            WeatherDailyBean weatherDailyBean = new WeatherDailyBean();
+            weatherDailyBean.setCloud(map.get(WeatherDaily.CLOUD));
+            weatherDailyBean.setHumidity(map.get(WeatherDaily.HUMIDITY));
+            weatherDailyBean.setPrecip(map.get(WeatherDaily.PRECIP));
+            weatherDailyBean.setPressure(map.get(WeatherDaily.PRESSURE));
+            weatherDailyBean.setVis(map.get(WeatherDaily.VIS));
+
+            weatherDailyBean.setFxDate(map.get(FXDATE));
+            weatherDailyBean.setIconDay(map.get(ICONDAY));
+            weatherDailyBean.setIconNight(map.get(ICONNIGHT));
+            weatherDailyBean.setMoonPhase(map.get(MOONPHASE));
+            weatherDailyBean.setMoonPhaseIcon(map.get(MOONPHASEICON));
+            weatherDailyBean.setMoonrise(map.get(MOONRISE));
+            weatherDailyBean.setMoonset(map.get(MOONSET));
+            weatherDailyBean.setSunrise(map.get(SUNRISE));
+            weatherDailyBean.setSunset(map.get(SUNSET));
+            weatherDailyBean.setTempMax(map.get(TEMPMAX));
+            weatherDailyBean.setTempMin(map.get(TEMPMIN));
+            weatherDailyBean.setTextDay(map.get(TEXTDAY));
+            weatherDailyBean.setTextNight(map.get(TEXTNIGHT));
+            weatherDailyBean.setUvIndex(map.get(UVINDEX));
+            weatherDailyBean.setWind360Day(map.get(WIND360DAY));
+            weatherDailyBean.setWind360Night(map.get(WIND360NIGHT));
+            weatherDailyBean.setWindDirDay(map.get(WINDDIRDAY));
+            weatherDailyBean.setWindDirNight(map.get(WINDDIRNIGHT));
+            weatherDailyBean.setWindScaleDay(map.get(WINDSCALEDAY));
+            weatherDailyBean.setWindScaleNight(map.get(WINDSCALENIGHT));
+            weatherDailyBean.setWindSpeedDay(map.get(WINDSPEEDDAY));
+            weatherDailyBean.setWindSpeedNight(map.get(WINDSPEEDNIGHT));
+            return weatherDailyBean;
+        }catch (Exception e){
+            // api error 实时天气map 缺少相关key
+            HiLog.error(TAG,"JSON.map.get --->" + e);
+            return null;
+        }
+    }
+
+    private static WeatherNowBean getWeatherBean(Map<String, String> map){
+        try {
+            WeatherNowBean weatherNowBean = new WeatherNowBean();
+            weatherNowBean.setTemp(map.get(TEMP));
+            weatherNowBean.setText(map.get(TEXT));
+            weatherNowBean.setCloud(map.get(com.gzx.qweather.Constant.WeatherNow.CLOUD));
+            weatherNowBean.setDew(DEW);
+            weatherNowBean.setFeelsLike(FEELS_LIKE);
+            weatherNowBean.setHumidity(com.gzx.qweather.Constant.WeatherNow.HUMIDITY);
+            weatherNowBean.setIcon(ICON);
+            weatherNowBean.setObsTime(OBS_TIME);
+            weatherNowBean.setPrecip(com.gzx.qweather.Constant.WeatherNow.PRECIP);
+            weatherNowBean.setPressure(com.gzx.qweather.Constant.WeatherNow.PRESSURE);
+            weatherNowBean.setVis(com.gzx.qweather.Constant.WeatherNow.VIS);
+            weatherNowBean.setWind360(WIND360);
+            weatherNowBean.setWindSpeed(WIND_SPEED);
+            weatherNowBean.setWindScale(WIND_SCALE);
+            weatherNowBean.setWindDir(WIND_DIR);
+            return weatherNowBean;
         }catch (Exception e){
             // api error 实时天气map 缺少相关key
             HiLog.error(TAG,"JSON.map.get --->" + e);

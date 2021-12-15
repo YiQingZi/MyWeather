@@ -15,7 +15,9 @@ public enum UrlEnum {
 
     WEATHER_24H("/v7/weather/24h?"),
     WEATHER_72H("/v7/weather/72h?"),
-    WEATHER_168H("/v7/weather/168h?")
+    WEATHER_168H("/v7/weather/168h?"),
+    INDICES_1D("/v7/indices/1d?"),
+    INDICES_3D("/v7/indices/3d?")
 
     ;
 

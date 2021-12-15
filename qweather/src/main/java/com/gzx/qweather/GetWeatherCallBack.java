@@ -1,16 +1,18 @@
 package com.gzx.qweather;
 
-import com.gzx.qweather.Bean.WeatherNow;
+import com.gzx.qweather.Bean.WeatherDailyBean;
+import com.gzx.qweather.Bean.WeatherNowBean;
 
 import java.util.List;
 
 public interface GetWeatherCallBack {
 
     void onERROR(String errorCode);
-    void onNowSUCCESS(WeatherNow weatherNow);
 
-    void onDailySUCCESS(List<WeatherNow> dailyWeather);
+    void onNowSUCCESS(WeatherNowBean weatherNowBean);
 
-    void onHourlySUCCESS(List<WeatherNow> hourlyWeather);
+    void onDailySUCCESS(List<WeatherDailyBean> weatherDailyBeanList);
+
+    void onHourlySUCCESS(List<WeatherNowBean> hourlyWeather);
 
 }

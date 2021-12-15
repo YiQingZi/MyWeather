@@ -1,6 +1,6 @@
 package com.gzx.qweather.Bean;
 
-public class CityInfo {
+public class CityInfoBean {
 
     /** 地区/城市名称 */
     public String name;  //	地区/城市名称

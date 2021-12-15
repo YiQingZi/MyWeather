@@ -10,7 +10,9 @@ public enum RequestParametersEnum {
     ADM("adm"),
     NUMBER("number"),
     UNIT("unit"),
-    GZIP("gzip");
+    GZIP("gzip"),
+    TYPE("type")
+    ;
 
     private final String Param;
 
